@@ -1,52 +1,66 @@
-import {
-  Inject,
-  Injectable,
-} from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { TaskEntity } from 'src/entities/task.entity';
 import { Repository } from 'typeorm';
 import { UpdateTasksPositionDto } from './updateTasksPositionDto';
-
 
 @Injectable()
 export class TaskService {
   constructor(
     @Inject('TASK_REPOSITORY')
     private taskRepository: Repository<TaskEntity>,
-    @Inject('USERS_REPOSITORY')
-    private tasksRepository: Repository<TaskEntity>,
   ) {}
 
   async findAll() {
     return this.taskRepository.find();
   }
 
-  async createOne(title: string) {
+  async createOne(colId: number) {
     const lastTask = await this.taskRepository.findOne({
       where: {},
       order: { position: 'DESC' },
     });
     const lastPosition = lastTask ? lastTask.position : 0;
     const newTask = this.taskRepository.create({
-      content: title,
+      content: 'New',
       position: lastPosition + 1,
+      column: { id: colId },
     });
 
-    return await this.taskRepository.save(newTask);
-  }
+    try {
+      const savedTask = await this.taskRepository.save(newTask);
 
-  
-  async updateTasksPosition(positions: UpdateTasksPositionDto[]) {
-    const columns = await this.taskRepository.find();
+      savedTask.column
 
-    for (const pos of positions) {
-        const columnIndex = columns.findIndex((el) => el.id === pos.id);
-        columns[columnIndex].position = pos.position;
+      return {...savedTask, columnId: savedTask.column.id as number};
+    } catch(err) {
+      console.error(err)
+      throw new Error("Failed to seve newTask")
     }
-
-    console.log(columns)
-
-    this.taskRepository.save(columns);
   }
 
+  async updateTasksPosition(
+    taskId: number,
+    taskPosition: number,
+    colId: number,
+  ) {
+    this.taskRepository.update(taskId, {
+      column: {id: colId}
+    })
+    const tasks = (await this.taskRepository.find({
+      where: { column: { id: colId } },
+      order: { position: 'ASC' },
+    })).filter((el) => el.id !== taskId);
 
+    let i = 0;
+    tasks.forEach(element => {
+      if (i != taskPosition)
+        element.position = Number(i);
+      i++;
+    });
+
+    const task = await this.taskRepository.findOneBy({id: taskId});
+    task.position = Number(taskPosition as number);
+
+    this.taskRepository.save(tasks);
+  }
 }

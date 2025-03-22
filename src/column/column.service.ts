@@ -3,7 +3,6 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { ColumnEntity } from 'src/entities/column.entity';
-import { TaskEntity } from 'src/entities/task.entity';
 import { Repository } from 'typeorm';
 import { UpdateColumnsPositionDto } from './updateColumnsPositionDto';
 
@@ -12,13 +11,20 @@ import { UpdateColumnsPositionDto } from './updateColumnsPositionDto';
 export class ColumnService {
   constructor(
     @Inject('COLUMN_REPOSITORY')
-    private columnsRepository: Repository<ColumnEntity>,
-    @Inject('USERS_REPOSITORY')
-    private tasksRepository: Repository<TaskEntity>,
+    private columnsRepository: Repository<ColumnEntity>
   ) {}
 
   async findAll() {
-    return this.columnsRepository.find();
+    return this.columnsRepository.find({
+        relations: ['tasks']
+    });
+  }
+
+  async findAllWhere(userId) {
+    return this.columnsRepository.find({
+        where: {user: {id: userId}},
+        relations: ['tasks']
+    });
   }
 
   async createOne(title: string) {
@@ -26,13 +32,24 @@ export class ColumnService {
       where: {},
       order: { position: 'DESC' },
     });
-    const lastPosition = lastColumn ? lastColumn.position : 0;
+    const lastPosition = Number(lastColumn ? lastColumn.position : 0);
     const newColumn = this.columnsRepository.create({
       title: title,
-      position: lastPosition + 1,
+      position: Number(lastPosition + 1),
     });
 
-    return await this.columnsRepository.save(newColumn);
+    try {
+      await this.columnsRepository.save(newColumn);
+    } catch(err) {
+      console.error(err)
+      throw new Error("Failed to save newColumn")
+    }
+    
+    return newColumn
+  }
+
+  async deleteColumn(colId: number) {
+    return this.columnsRepository.delete(colId);
   }
 
   
@@ -41,26 +58,11 @@ export class ColumnService {
 
     for (const pos of positions) {
         const columnIndex = columns.findIndex((el) => el.id === pos.id);
-        columns[columnIndex].position = pos.position;
+        columns[columnIndex].position = Number(pos.position);
     }
 
     console.log(columns)
 
     this.columnsRepository.save(columns);
-  }
-
-  async moveTask(columnId: number, taskId: number): Promise<ColumnEntity> {
-    const column = await this.columnsRepository.findOne({
-      where: { id: columnId },
-    });
-    const task = await this.tasksRepository.findOne({ where: { id: taskId } });
-
-    if (!column || !task) throw new Error('Task or Colun not found');
-
-    task.column = column;
-
-    this.tasksRepository.save(task);
-
-    return column;
   }
 }

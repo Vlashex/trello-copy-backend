@@ -16,6 +16,6 @@ export class TaskEntity {
     @Column()
     position!: number;
 
-    @ManyToOne(() => ColumnEntity, column => column.tasks)
+    @ManyToOne(() => ColumnEntity, column => column.tasks, {onDelete: 'CASCADE'})
     column!: ColumnEntity;
 }

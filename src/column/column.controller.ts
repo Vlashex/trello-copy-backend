@@ -11,6 +11,11 @@ export class ColumnController {
     return this.columnService.findAll();
   }
 
+  @Get(':userId')
+  async findAllWhere(@Param('userId') userId: number) {
+    return this.columnService.findAllWhere(userId);
+  }
+
   @Post()
   async createOne() {
     return this.columnService.createOne('new');
@@ -18,14 +23,13 @@ export class ColumnController {
 
   @Put()
   async swapColumns(@Body() positions: UpdateColumnsPositionDto[]) {
+    console.log('swap')
     return this.columnService.updateColumnsPosition(positions);
   }
 
-  @Put(':taskId/move/:newColumnId')
-  async moveTask(
-    @Param('taskId') taskId: number,
-    @Param('newColumnId') newColumnId: number,
-  ) {
-    return this.moveTask(taskId, newColumnId);
+  @Put(':colId')
+  async DeleteDateColumn(@Param('colId') colId: number) {
+    return this.columnService.deleteColumn(colId);
   }
 }
+

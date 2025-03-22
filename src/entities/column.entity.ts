@@ -1,5 +1,6 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { TaskEntity } from "./task.entity";
+import { UserEntity } from "./user.entity";
 
 
 
@@ -17,4 +18,7 @@ export class ColumnEntity {
 
     @OneToMany(() => TaskEntity, task => task.column)
     tasks: TaskEntity[];
+
+    @ManyToOne(()=>ColumnEntity, column=>column.user)
+    user: UserEntity
 }

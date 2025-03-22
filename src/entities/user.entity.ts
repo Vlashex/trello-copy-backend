@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { ColumnEntity } from "./column.entity";
 
 
 
@@ -13,4 +14,7 @@ export class UserEntity {
 
     @Column()
     email: string;
+
+    @OneToMany(()=>UserEntity, user => user.columns, {onDelete: 'CASCADE'})
+    columns: ColumnEntity
 }

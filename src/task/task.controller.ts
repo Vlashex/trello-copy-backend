@@ -1,8 +1,7 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Put } from '@nestjs/common';
+import { Controller, Get, Param, Post, Put } from '@nestjs/common';
 import { TaskService } from './task.service';
-import { UpdateTasksPositionDto } from './updateTasksPositionDto';
 
-@Controller('task')
+@Controller('tasks')
 export class TaskController {
   constructor(private readonly taskService: TaskService) {}
 
@@ -11,13 +10,16 @@ export class TaskController {
     return this.taskService.findAll();
   }
 
-  @Post()
-  async createOne() {
-    return this.taskService.createOne('new');
+  @Post(':colId')
+  async createOne(@Param('colId') colId: number) {
+    return this.taskService.createOne(colId);
   }
 
-  @Put()
-  async swapTasks(@Body() positions: UpdateTasksPositionDto[]) {
-    return this.taskService.updateTasksPosition(positions);
+  @Put(':taskId/:taskPos/:colId')
+  async DeleteDateColumn(
+    @Param('taskId') taskId: number, 
+    @Param('taskPos') taskPos: number, 
+    @Param('colId') colId: number) {
+    return this.taskService.updateTasksPosition(taskId, taskPos, colId);
   }
 }
